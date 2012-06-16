@@ -1,9 +1,11 @@
 %%%-------------------------------------------------------------------
 %%% File    : eb_atm.erl
 %%% Author  : Mitchell Hashimoto <mitchell.hashimoto@gmail.com>
+%%% Editor  : Charles Feduke
 %%% Description : The ATM backend for ErlyBank
 %%%
 %%% Created :  6 Sep 2008 by Mitchell Hashimoto <mitchell.hashimoto@gmail.com>
+%%% Modified: 16 Jun 2012
 %%%-------------------------------------------------------------------
 -module(eb_atm).
 
