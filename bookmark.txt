@@ -1,0 +1,3 @@
+http://spawnlink.com/articles/an-introduction-to-gen_fsm-erlybanks-atm/index.html
+ATM Design Strategy
+
