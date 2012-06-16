@@ -1,16 +1,18 @@
 %%%-------------------------------------------------------------------
 %%% File    : eb_server.erl
 %%% Author  : Mitchell Hashimoto <mitchell.hashimoto@gmail.com>
+%%% Editr   : Charles Feduke
 %%% Description : The ErlyBank account server.
 %%%
 %%% Created :  5 Sep 2008 by Mitchell Hashimoto <mitchell.hashimoto@gmail.com>
+%%% Modified: 16 Jun 2012
 %%%-------------------------------------------------------------------
 -module(eb_server).
 
 -behaviour(gen_server).
 
 %% API
--export([start_link/0]).
+-export([start_link/0, create_account/1, destroy_account/1, deposit/2, withdrawal/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -40,8 +42,8 @@ start_link() ->
 %%                         {stop, Reason}
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
-init([]) ->
-  {ok, #state{}}.
+init(_Args) ->
+	{ok, dict:new()}. 
 
 %%--------------------------------------------------------------------
 %% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
@@ -52,6 +54,26 @@ init([]) ->
 %%                                      {stop, Reason, State}
 %% Description: Handling call messages
 %%--------------------------------------------------------------------
+handle_call({deposit, Name, Amount}, _From, State) ->
+	case dict:find(Name, State) of
+		{ok, Value} ->
+			NewBalance = Value + Amount,
+			Response = {ok, NewBalance},
+			NewState = dict:store(Name, NewBalance, State),
+			{reply, Response, NewState};
+		error ->
+			{reply, {error, account_does_not_exist}, State}
+	end;
+handle_call({withdrawal, Name, Amount}, _From, State) ->
+	case dict:find(Name, State) of
+		{ok, Value} ->
+			NewBalance = Value - Amount,
+			Response = {ok, NewBalance},
+			NewState = dict:store(Name, NewBalance, State),
+			{reply, Response, NewState};
+		error ->
+			{reply, {error, account_does_not_exist}, State}
+	end;
 handle_call(_Request, _From, State) ->
   Reply = ok,
   {reply, Reply, State}.
@@ -62,6 +84,10 @@ handle_call(_Request, _From, State) ->
 %%                                      {stop, Reason, State}
 %% Description: Handling cast messages
 %%--------------------------------------------------------------------
+handle_cast({create, Name}, State) ->
+	{noreply, dict:store(Name, 0, State)};
+handle_cast({destroy, Name}, State) ->
+	{noreply, dict:erase(Name, State)};
 handle_cast(_Msg, State) ->
   {noreply, State}.
 
@@ -94,3 +120,15 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
+
+create_account(Name) ->
+	gen_server:cast(?SERVER, {create, Name}).
+
+deposit(Name, Amount) ->
+	gen_server:call(?SERVER, {deposit, Name, Amount}).
+
+withdrawal(Name, Amount) ->
+	gen_server:call(?SERVER, {withdrawal, Name, Amount}).
+
+destroy_account(Name) ->
+	gen_server:cast(?SERVER, {destroy, Name}).
