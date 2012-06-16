@@ -12,7 +12,11 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, create_account/1, destroy_account/1, deposit/2, withdrawal/2]).
+-export([start_link/0,
+		create_account/1,
+		destroy_account/1,
+		deposit/2,
+		withdraw/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -64,8 +68,10 @@ handle_call({deposit, Name, Amount}, _From, State) ->
 		error ->
 			{reply, {error, account_does_not_exist}, State}
 	end;
-handle_call({withdrawal, Name, Amount}, _From, State) ->
+handle_call({withdraw, Name, Amount}, _From, State) ->
 	case dict:find(Name, State) of
+		{ok, Value} when Value < Amount,
+			{reply, {error, not_enough_funds}, State};
 		{ok, Value} ->
 			NewBalance = Value - Amount,
 			Response = {ok, NewBalance},
@@ -127,8 +133,8 @@ create_account(Name) ->
 deposit(Name, Amount) ->
 	gen_server:call(?SERVER, {deposit, Name, Amount}).
 
-withdrawal(Name, Amount) ->
-	gen_server:call(?SERVER, {withdrawal, Name, Amount}).
+withdraw(Name, Amount) ->
+	gen_server:call(?SERVER, {withdraw, Name, Amount}).
 
 destroy_account(Name) ->
 	gen_server:cast(?SERVER, {destroy, Name}).
